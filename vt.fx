@@ -152,6 +152,18 @@ sampler_state
 	
 };
 
+
+texture TestTexture;
+sampler TestSampler =
+sampler_state
+{
+	Texture = <TestTexture>;
+	MipFilter = NONE;
+	MinFilter = LINEAR;
+	MagFilter = LINEAR;
+
+};
+
 struct VS_OUTPUTNormal
 {
 	float4 Position   : POSITION;   // vertex position 
@@ -330,6 +342,18 @@ PS_OUTPUT RenderScenePS3(VS_OUTPUTNormal In)
 }
 
 
+PS_OUTPUT RenderScenePSTest(VS_OUTPUTNormal In)
+{
+	PS_OUTPUT Output;
+
+	float4 color = tex2D(TestSampler, In.TextureUV);
+
+	Output.RGBColor = color;
+
+	return Output;
+}
+
+
 //--------------------------------------------------------------------------------------
 // Renders scene 
 //--------------------------------------------------------------------------------------
@@ -363,6 +387,13 @@ technique RenderScene
 
 		VertexShader = compile vs_3_0 RenderSceneTerrain();
 		PixelShader = compile ps_3_0 RenderScenePS3();
+	}
+
+	pass P4
+	{
+
+		VertexShader = compile vs_3_0 RenderSceneTerrain2();
+		PixelShader = compile ps_3_0 RenderScenePSTest();
 	}
 
 

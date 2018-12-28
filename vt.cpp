@@ -232,6 +232,7 @@ bool CALLBACK ModifyDeviceSettings(DXUTDeviceSettings* pDeviceSettings, void* pU
 uint32_t * indirectTexData[11];
 IDirect3DTexture9* pIndirectTex;
 IDirect3DTexture9* pIndirectMap;
+IDirect3DTexture9* pTestTex;
 
 
 
@@ -346,7 +347,32 @@ HRESULT CALLBACK OnD3D9CreateDevice(IDirect3DDevice9* pd3dDevice, const D3DSURFA
 
 
 
-	pd3dDevice->CreateTexture(1024, 1024, 0, 0, D3DFMT_A16B16G16R16,  D3DPOOL_MANAGED, &pIndirectTex, NULL);
+
+	pd3dDevice->CreateTexture(1024, 1024, 1, 0, D3DFMT_A2R10G10B10, D3DPOOL_MANAGED, &pTestTex, NULL);
+
+	D3DLOCKED_RECT rect;
+	pTestTex->LockRect(0, &rect, NULL, 0);
+
+	uint32_t* texdata = (uint32_t*)rect.pBits;
+
+	
+	for (int i = 0; i < 1024*1024; i++)
+	{
+
+		int r = 0x00;
+		int g = 0x00;
+		int b = 0xff;
+
+		texdata[i ] =  r<<22| g << 12| b << 2;
+	}
+
+	pTestTex->UnlockRect(0);
+
+
+	D3DXHANDLE hTest = g_pEffect9->GetParameterByName(NULL, "TestTexture");
+	g_pEffect9->SetTexture(hTest, pTestTex);
+
+	pd3dDevice->CreateTexture(1024, 1024, 0, 0, D3DFMT_A2R10G10B10,  D3DPOOL_MANAGED, &pIndirectTex, NULL);
 
 	pd3dDevice->CreateTexture(1024, 1024, 0, 0, D3DFMT_X8R8G8B8, D3DPOOL_MANAGED, &pIndirectMap, NULL);
 
@@ -376,13 +402,13 @@ HRESULT CALLBACK OnD3D9CreateDevice(IDirect3DDevice9* pd3dDevice, const D3DSURFA
 		
 		pIndirectTex->LockRect(level, &rect, NULL, 0);
 
-		uint64_t* ptexdata = (uint64_t*)rect.pBits;
+		uint32_t* ptexdata = (uint32_t*)rect.pBits;
 
 		int mipsize = 1024 >> level;
-		for (uint64_t j = 0; j < mipsize; j++)
-			for(uint64_t i=0; i < mipsize; i++)
+		for (uint32_t j = 0; j < mipsize; j++)
+			for(uint32_t i=0; i < mipsize; i++)
 			{
-				ptexdata[i + j * mipsize] = (level << 48) | (i << 32) | (j << 16);
+				ptexdata[i + j * mipsize] = (level << 22) | (i << 12) | (j << 2);
 			}
 		
 		pIndirectTex->UnlockRect(level);
@@ -440,14 +466,9 @@ HRESULT CALLBACK OnD3D9ResetDevice(IDirect3DDevice9* pd3dDevice,
 	g_SampleUI.SetLocation(pBackBufferSurfaceDesc->Width - 170, pBackBufferSurfaceDesc->Height - 350);
 	g_SampleUI.SetSize(170, 300);
 
-	D3DXCreateTexture(pd3dDevice, pBackBufferSurfaceDesc->Width, pBackBufferSurfaceDesc->Height, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A16B16G16R16, D3DPOOL_DEFAULT, &newRT);
-	D3DXCreateTexture(pd3dDevice, pBackBufferSurfaceDesc->Width, pBackBufferSurfaceDesc->Height, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A16B16G16R16, D3DPOOL_DEFAULT, &newRT1);
-
-	D3DXCreateTexture(pd3dDevice, pBackBufferSurfaceDesc->Width, pBackBufferSurfaceDesc->Height, 1, 0, D3DFMT_A16B16G16R16, D3DPOOL_SYSTEMMEM, &sysRT);
-	D3DXCreateTexture(pd3dDevice, pBackBufferSurfaceDesc->Width, pBackBufferSurfaceDesc->Height, 1, 0, D3DFMT_A16B16G16R16, D3DPOOL_SYSTEMMEM, &sysRT1);
-
+	D3DXCreateTexture(pd3dDevice, pBackBufferSurfaceDesc->Width, pBackBufferSurfaceDesc->Height, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A2R10G10B10, D3DPOOL_DEFAULT, &newRT);
+	D3DXCreateTexture(pd3dDevice, pBackBufferSurfaceDesc->Width, pBackBufferSurfaceDesc->Height, 1, 0, D3DFMT_A2R10G10B10, D3DPOOL_SYSTEMMEM, &sysRT);
 	
-
 	for (int index = 0; index < 1024; index++)
 	{
 		pd3dDevice->CreateTexture(256, 256, 1, D3DUSAGE_RENDERTARGET, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &virtualtexs[index], NULL);
@@ -543,7 +564,7 @@ void ProcessFeedback(IDirect3DDevice9* pDevice,IDirect3DSurface9* pRT)
 
 	D3DLOCKED_RECT rect;
 	psysSurf->LockRect(&rect, NULL, 0);
-	uint64_t* pfeedbackdata = (uint64_t *)rect.pBits;
+	uint32_t* pfeedbackdata = (uint32_t *)rect.pBits;
 
 
 	for (int i = 0; i < 11; i++)
@@ -565,11 +586,11 @@ void ProcessFeedback(IDirect3DDevice9* pDevice,IDirect3DSurface9* pRT)
 
 	for (int i = 0; i < desc.Width*desc.Height; i++)
 	{
-		if (pfeedbackdata[i] != 0xffffffffffffffff)
+		if (pfeedbackdata[i] != 0xffffffff)
 		{
-			int level = pfeedbackdata[i] >> 48;
-			int xbias = (pfeedbackdata[i] & 0x0000ffff00000000) >> 32;
-			int ybias = (pfeedbackdata[i] & 0x00000000ffff0000) >> 16;
+			int level = pfeedbackdata[i] >> 22;
+			int xbias = (pfeedbackdata[i] & 0x003ff000) >> 12;
+			int ybias = (pfeedbackdata[i] & 0x00000ffc) >> 2;
 			int texadr = (level << 24) | (xbias + ybias * 4096);
 
 			int texsize = 1024 >> level;
@@ -677,6 +698,13 @@ void CALLBACK OnD3D9FrameRender(IDirect3DDevice9* pd3dDevice, double fTime, floa
 		terrainMesh->Render();
 		g_pEffect9->EndPass();
 
+/*
+
+		g_pEffect9->BeginPass(4);
+		DrawQuad(pd3dDevice);
+		g_pEffect9->EndPass();
+
+*/
 
 		g_pEffect9->End();
 

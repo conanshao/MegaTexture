@@ -387,7 +387,6 @@
   <ItemGroup>
     <ClInclude Include="terrainMesh.h" />
     <ClInclude Include="TexGenerator.h" />
-    <ClInclude Include="VTShare.h" />
     <None Include="DXUT\Optional\directx.ico" />
     <ClInclude Include="DXUT\Core\DXUT.h" />
     <ClInclude Include="DXUT\Core\DXUTenum.h" />
