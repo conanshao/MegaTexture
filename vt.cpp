@@ -11,6 +11,7 @@
 #include "terrainMesh.h"
 #include <stdint.h>
 #include <vector>
+#include <map>
 
 //#define DEBUG_VS   // Uncomment this line to debug D3D9 vertex shaders 
 //#define DEBUG_PS   // Uncomment this line to debug D3D9 pixel shaders 
@@ -516,9 +517,60 @@ void DrawQuad(IDirect3DDevice9* pDevice,float x,float y,float quadsize)
 	pDevice->DrawPrimitiveUP(D3DPT_TRIANGLESTRIP, 2, (void*)v, sizeof(QuadVertex));
 }
 
+struct Datastr
+{
+	int visit;
+	int xbias;
+	int ybias;
+	int level;
+	
+};
+
+Datastr pageindexVisit[1024];
+
+
+
+void InitProcessTex()
+{
+	static bool init = false;
+
+	if (init == false)
+	{
+
+		for (int i = 0; i < 1024; i++)
+		{
+			
+			pageindexVisit[i].visit = -1;
+			
+		}
+			
+
+		int pageindex = vtgen->getPageIndex();
+
+		int xpage = pageindex % 32;
+		int ypage = pageindex / 32;
+		int compindex = 10 << 16 | (xpage << 8) | ypage;
+
+		pageindexVisit[0].level = 10;
+		pageindexVisit[0].xbias = 0;
+		pageindexVisit[0].ybias = 0;
+		pageindexVisit[0].visit = 0;
+
+		int texadr = (10 << 24) | (0 + 0 * 4096);
+
+		vtgen->updateTexture(pageindex, texadr);
+
+		indirectTexData[10][0] = compindex;
+
+		init = true;
+	}
+	
+}
 
 void ProcessFeedback(IDirect3DDevice9* pDevice,IDirect3DSurface9* pRT)
 {
+
+	InitProcessTex();
 
 	IDirect3DSurface9* psysSurf;
 	sysRT->GetSurfaceLevel(0, &psysSurf);
@@ -532,24 +584,43 @@ void ProcessFeedback(IDirect3DDevice9* pDevice,IDirect3DSurface9* pRT)
 	D3DLOCKED_RECT rect;
 	psysSurf->LockRect(&rect, NULL, 0);
 	uint32_t* pfeedbackdata = (uint32_t *)rect.pBits;
-
-	for (int i = 0; i < 11; i++)
+	
+	//recycle the texture 
+	for (int i = 1; i < 1024; i++)
 	{
-		int texwidth = 1024 >> i;
-		memset(indirectTexData[i], 0xffffffff, sizeof(uint32_t)*texwidth*texwidth);
+		if ( pageindexVisit[i].visit != -1)
+		{
+			pageindexVisit[i].visit++;
+		}
+		
+		if ( pageindexVisit[i].visit >= 3 )
+		{
+
+			vtgen->recycleIndex(i);
+			pageindexVisit[i].visit = -1;
+			int level = pageindexVisit[i].level;
+			int xbias = pageindexVisit[i].xbias;
+			int ybias = pageindexVisit[i].ybias;
+			int texsize = 1024 >> level;
+			indirectTexData[level][xbias + ybias * texsize] = 0xffffffff;
+		}
 	}
 
-	int pageindex = 0;
-
-	struct DataStr
+	//process indirect tex
+	/*for (int level = 9; level < 0; level--)
 	{
-		int level;
-		int xbias;
-		int ybias;
-		int pageindex;
-	};
+		int mipsize = 1024 >> level;
+		for (uint32_t j = 0; j < mipsize; j++)
+			for (uint32_t i = 0; i < mipsize; i++)
+			{
+				if( indirectTexData[level][i + j * mipsize] > level  )
+				{
+					indirectTexData[level][i + j * mipsize] = indirectTexData[level + 1][i / 2 + (j / 2) * (mipsize / 2)];
+				}
+			}
+	}*/
 
-	std::vector<DataStr> dataarray;
+	int countindex = 0;
 	for (int i = 0; i < desc.Width*desc.Height; i++)
 	{
 		if (pfeedbackdata[i] != 0xffffffff)
@@ -561,35 +632,46 @@ void ProcessFeedback(IDirect3DDevice9* pDevice,IDirect3DSurface9* pRT)
 
 			int texsize = 1024 >> level;
 
+			if (i == 559231)
+			{
+				int test = 0;
+			}
+
 			uint32_t& indirectData = indirectTexData[level][xbias + ybias * texsize];
 			uint32_t oldlevel = indirectData >> 16;
 			if ( oldlevel != level )
 			{
+				int pageindex = vtgen->getPageIndex();
+				
+				if (pageindex == -1)
+				{
+					assert(0);
+				}
+
 				int xpage = pageindex % 32;
 				int ypage = pageindex / 32;
 				
 				int compindex = level << 16 | (xpage << 8) | ypage;
-				indirectTexData[level][xbias + ybias * texsize] = compindex;
+				indirectData = compindex;
 
-				DataStr dastr;
-				dastr.level = level;
-				dastr.pageindex = compindex;
-				dastr.xbias = xbias;
-				dastr.ybias = ybias;
-				dataarray.push_back(dastr);
+				pageindexVisit[pageindex].visit = 0;
+				pageindexVisit[pageindex].level = level;
+				pageindexVisit[pageindex].xbias = xbias;
+				pageindexVisit[pageindex].ybias = ybias;
 
 				vtgen->updateTexture(pageindex, texadr);
-				pageindex++;
-
-
-
+				countindex++;
+			}
+			else
+			{
+				int pageindex = ((indirectData & 0x0000ff00)>>8 )|(indirectData & 0x000000ff)<<5;
+				pageindexVisit[pageindex].visit = 0;
 			}
 		}
 	}
 
 	updateIndirectTex();
-	//recycle the texture 
-
+	
 	psysSurf->UnlockRect();
 }
 
