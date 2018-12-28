@@ -71,6 +71,8 @@ public:
 
 	void saveTexture();
 
+	void shutdown();
+
 
 };
 

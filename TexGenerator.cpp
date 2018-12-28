@@ -97,7 +97,32 @@ void VTGenerator::InitTex()
 
 	g_hmWorldViewProjection = pTexEffect->GetParameterByName(NULL, "g_mWorldViewProjection");
 
+}
 
+
+void VTGenerator::shutdown()
+{
+	SAFE_RELEASE(masktex1);
+	SAFE_RELEASE(masktex2);
+
+	SAFE_RELEASE(brock);
+	SAFE_RELEASE(bforest);
+	SAFE_RELEASE(grass);
+	SAFE_RELEASE(ground);
+	SAFE_RELEASE(pine);
+	SAFE_RELEASE(srock);
+	
+	SAFE_RELEASE(pTexEffect);
+
+	SAFE_RELEASE(TextureCache);
+
+	SAFE_RELEASE(pNewRT);
+
+	SAFE_RELEASE(pNewDS);
+	SAFE_RELEASE(pRT);
+	
+	SAFE_RELEASE(pOrinRT);
+	SAFE_RELEASE(pOrinDS);
 }
 
 void VTGenerator::DrawFullScreenQuad()
@@ -171,6 +196,9 @@ void VTGenerator::Begin(IDirect3DTexture9* ptex)
 	pDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 0, 0, 0), 1.0f, 0);
 
 	SAFE_RELEASE(pNewRT);
+	SAFE_RELEASE(pNewDS);
+
+	
 
 }
 
@@ -295,6 +323,7 @@ void VTGenerator::updateTexture(int texpage, int textadr)
 	//rect.top = 128 + biasy * 128;
 		
 	pDevice->StretchRect(pNewRT,NULL, psurf, &rect, D3DTEXF_LINEAR);
+	SAFE_RELEASE(psurf);
 		
 }
 

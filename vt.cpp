@@ -43,21 +43,7 @@ TerrainMesh* terrainMesh = NULL;
 
 
 IDirect3DTexture9* terrainTex = NULL;
-IDirect3DTexture9* mipTex = NULL;
 
-IDirect3DTexture9* masktex1 = NULL;
-IDirect3DTexture9* masktex2 = NULL;
-
-IDirect3DTexture9* brock = NULL;
-IDirect3DTexture9* bforest = NULL;
-IDirect3DTexture9* grass = NULL;
-IDirect3DTexture9* ground = NULL;
-
-IDirect3DTexture9* pine = NULL;
-IDirect3DTexture9* srock = NULL;
-
-IDirect3DTexture9* fetchTex = NULL;
-IDirect3DTexture9* resultTex = NULL;
 
 
 IDirect3DTexture9* newRT0 = NULL;
@@ -312,8 +298,6 @@ HRESULT CALLBACK OnD3D9CreateDevice(IDirect3DDevice9* pd3dDevice, const D3DSURFA
 	vtgen = new VTGenerator(pd3dDevice);
 
 
-
-
 	pd3dDevice->CreateTexture(1024, 1024, 0, 0, D3DFMT_X8R8G8B8, D3DPOOL_MANAGED, &pTestTex, NULL);
 
 	uint32_t colorlevels[11] =
@@ -403,7 +387,7 @@ HRESULT CALLBACK OnD3D9CreateDevice(IDirect3DDevice9* pd3dDevice, const D3DSURFA
 }
 
 
-IDirect3DTexture9* virtualtexs[1024];
+
 
 //--------------------------------------------------------------------------------------
 // Create any D3D9 resources that won't live through a device reset (D3DPOOL_DEFAULT) 
@@ -438,10 +422,7 @@ HRESULT CALLBACK OnD3D9ResetDevice(IDirect3DDevice9* pd3dDevice,
 	
 	D3DXCreateTexture(pd3dDevice, pBackBufferSurfaceDesc->Width / 4, pBackBufferSurfaceDesc->Height / 4, 1, 0, D3DFMT_A2R10G10B10, D3DPOOL_SYSTEMMEM, &sysRT);
 	
-	for (int index = 0; index < 1024; index++)
-	{
-		pd3dDevice->CreateTexture(256, 256, 1, D3DUSAGE_RENDERTARGET, D3DFMT_X8R8G8B8, D3DPOOL_DEFAULT, &virtualtexs[index], NULL);
-	}
+
 		
 	return S_OK;
 }
@@ -579,7 +560,7 @@ void ProcessFeedback(IDirect3DDevice9* pDevice)
 	pDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
 
 	g_pEffect9->BeginPass(2);
-	terrainMesh->Render();
+	terrainMesh->Renderlow();
 	g_pEffect9->EndPass();
 
 	pDevice->SetRenderTarget(0, pOldRT);
@@ -621,7 +602,7 @@ void ProcessFeedback(IDirect3DDevice9* pDevice)
 	}
 
 	//process indirect tex
-	/*for (int level = 9; level < 0; level--)
+	for (int level = 9; level < 0; level--)
 	{
 		int mipsize = 1024 >> level;
 		for (uint32_t j = 0; j < mipsize; j++)
@@ -632,7 +613,7 @@ void ProcessFeedback(IDirect3DDevice9* pDevice)
 					indirectTexData[level][i + j * mipsize] = indirectTexData[level + 1][i / 2 + (j / 2) * (mipsize / 2)];
 				}
 			}
-	}*/
+	}
 
 	int countindex = 0;
 	for (int i = 0; i < desc.Width*desc.Height; i++)
@@ -646,10 +627,6 @@ void ProcessFeedback(IDirect3DDevice9* pDevice)
 
 			int texsize = 1024 >> level;
 
-			if (i == 559231)
-			{
-				int test = 0;
-			}
 
 			uint32_t& indirectData = indirectTexData[level][xbias + ybias * texsize];
 			uint32_t oldlevel = indirectData >> 16;
@@ -690,6 +667,7 @@ void ProcessFeedback(IDirect3DDevice9* pDevice)
 
 	SAFE_RELEASE(pRT);
 	SAFE_RELEASE(pOldRT);
+	SAFE_RELEASE(psysSurf);
 
 
 	
@@ -753,7 +731,7 @@ void CALLBACK OnD3D9FrameRender(IDirect3DDevice9* pd3dDevice, double fTime, floa
 
 		
 		g_pEffect9->BeginPass(3);
-		terrainMesh->Render();
+		terrainMesh->Renderlow();
 		g_pEffect9->EndPass();
 		
 		/*
@@ -855,9 +833,9 @@ void CALLBACK OnD3D9LostDevice(void* pUserContext)
 	SAFE_RELEASE(g_pSprite9);
 	SAFE_DELETE(g_pTxtHelper);
 
-
-
 	SAFE_RELEASE(newRT0);
+	SAFE_RELEASE(newRT1);
+	SAFE_RELEASE(sysRT);
 
 }
 
@@ -874,10 +852,18 @@ void CALLBACK OnD3D9DestroyDevice(void* pUserContext)
 	SAFE_RELEASE(g_pFont9);
 
 	SAFE_RELEASE(terrainTex);
-	SAFE_RELEASE(mipTex);
+
 
 	terrainMesh->Shut();
 	delete terrainMesh;
+	vtgen->shutdown();
+	delete vtgen;
+
+	SAFE_RELEASE(pTestTex);
+
+	SAFE_RELEASE(pIndirectTex);
+
+	SAFE_RELEASE(pIndirectMap);
 
 
 }
