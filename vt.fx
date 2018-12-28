@@ -126,7 +126,7 @@ sampler_state
 	MipFilter = POINT;
 	MinFilter = POINT;
 	MagFilter = POINT;
-	MIPMAPLODBIAS = 6;
+	MIPMAPLODBIAS = 4;
 };
 
 
@@ -158,9 +158,10 @@ sampler TestSampler =
 sampler_state
 {
 	Texture = <TestTexture>;
-	MipFilter = NONE;
+	MipFilter = POINT;
 	MinFilter = LINEAR;
 	MagFilter = LINEAR;
+	MIPMAPLODBIAS = 4;
 
 };
 
@@ -392,7 +393,7 @@ technique RenderScene
 	pass P4
 	{
 
-		VertexShader = compile vs_3_0 RenderSceneTerrain2();
+		VertexShader = compile vs_3_0 RenderSceneTerrain();
 		PixelShader = compile ps_3_0 RenderScenePSTest();
 	}
 

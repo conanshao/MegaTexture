@@ -293,9 +293,9 @@ HRESULT CALLBACK OnD3D9CreateDevice(IDirect3DDevice9* pd3dDevice, const D3DSURFA
 	g_hfTime = g_pEffect9->GetParameterByName(NULL, "g_fTime");
 
 	// Setup the camera's view parameters
-	D3DXVECTOR3 vecEye(68.2821579, 5.6292763, -61.6675453);
+	D3DXVECTOR3 vecEye(68.2821579, 35.6292763, -61.6675453);
 
-	D3DXVECTOR3 vecAt(68.2470551, 5.6266937, -60.6681633);
+	D3DXVECTOR3 vecAt(68.2470551, 35.6266937, -60.6681633);
 
 	g_Camera.SetViewParams(&vecEye, &vecAt);
 	g_Camera.SetScalers(0.001f, 50.0f);
@@ -314,25 +314,42 @@ HRESULT CALLBACK OnD3D9CreateDevice(IDirect3DDevice9* pd3dDevice, const D3DSURFA
 
 
 
-	pd3dDevice->CreateTexture(1024, 1024, 1, 0, D3DFMT_A2R10G10B10, D3DPOOL_MANAGED, &pTestTex, NULL);
+	pd3dDevice->CreateTexture(1024, 1024, 0, 0, D3DFMT_X8R8G8B8, D3DPOOL_MANAGED, &pTestTex, NULL);
 
-	D3DLOCKED_RECT rect;
-	pTestTex->LockRect(0, &rect, NULL, 0);
-
-	uint32_t* texdata = (uint32_t*)rect.pBits;
-
-	
-	for (int i = 0; i < 1024*1024; i++)
+	uint32_t colorlevels[11] =
 	{
+		0xffffffff,
+		0xffff0000,
+		0xff00ff00,
+		0xff0000ff,
+		0x77777777,
+		0x77770000,
+		0x77007700,
+		0x77000077,
+		0xffffffff,
+		0xffff0000,
+		0xff00ff00
+	};
 
-		int r = 0x00;
-		int g = 0x00;
-		int b = 0xff;
+	for (int level = 0; level < 11; level++)
+	{
+		D3DLOCKED_RECT rect;
+		pTestTex->LockRect(level, &rect, NULL, 0);
 
-		texdata[i ] =  r<<22| g << 12| b << 2;
+		uint32_t* texdata = (uint32_t*)rect.pBits;
+
+		int texsize = 1024 >> level;
+
+		
+
+		
+		for (int i = 0; i < texsize * texsize; i++)
+		{
+			texdata[i] = colorlevels[level];
+		}
+	
+		pTestTex->UnlockRect(level);
 	}
-
-	pTestTex->UnlockRect(0);
 
 
 	D3DXHANDLE hTest = g_pEffect9->GetParameterByName(NULL, "TestTexture");
@@ -345,22 +362,6 @@ HRESULT CALLBACK OnD3D9CreateDevice(IDirect3DDevice9* pd3dDevice, const D3DSURFA
 	
 	int levelcount = pIndirectTex->GetLevelCount();
 	
-	uint64_t colorlevel[11] =
-	{
-		0xffffffffffffffff,
-		0xffffffff00000000,
-		0xffff0000ffff0000,
-		0xffff00000000ffff,
-		0x7777777777777777,
-		0x7777777700000000,
-		0x7777000077770000,
-		0x7777000000007777,
-		0xffffffffffffffff,
-		0xffffffff00000000,
-		0xffff0000ffff0000,
-	};
-
-
 
 	for ( uint64_t level = 0; level < 11; level++ )
 	{
@@ -432,10 +433,10 @@ HRESULT CALLBACK OnD3D9ResetDevice(IDirect3DDevice9* pd3dDevice,
 	g_SampleUI.SetLocation(pBackBufferSurfaceDesc->Width - 170, pBackBufferSurfaceDesc->Height - 350);
 	g_SampleUI.SetSize(170, 300);
 
-	D3DXCreateTexture(pd3dDevice, pBackBufferSurfaceDesc->Width, pBackBufferSurfaceDesc->Height, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A2R10G10B10, D3DPOOL_DEFAULT, &newRT0);
-	D3DXCreateTexture(pd3dDevice, pBackBufferSurfaceDesc->Width, pBackBufferSurfaceDesc->Height, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A2R10G10B10, D3DPOOL_DEFAULT, &newRT1);
+	D3DXCreateTexture(pd3dDevice, pBackBufferSurfaceDesc->Width/4, pBackBufferSurfaceDesc->Height / 4, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A2R10G10B10, D3DPOOL_DEFAULT, &newRT0);
+	D3DXCreateTexture(pd3dDevice, pBackBufferSurfaceDesc->Width / 4, pBackBufferSurfaceDesc->Height / 4, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A2R10G10B10, D3DPOOL_DEFAULT, &newRT1);
 	
-	D3DXCreateTexture(pd3dDevice, pBackBufferSurfaceDesc->Width, pBackBufferSurfaceDesc->Height, 1, 0, D3DFMT_A2R10G10B10, D3DPOOL_SYSTEMMEM, &sysRT);
+	D3DXCreateTexture(pd3dDevice, pBackBufferSurfaceDesc->Width / 4, pBackBufferSurfaceDesc->Height / 4, 1, 0, D3DFMT_A2R10G10B10, D3DPOOL_SYSTEMMEM, &sysRT);
 	
 	for (int index = 0; index < 1024; index++)
 	{
@@ -567,8 +568,21 @@ void InitProcessTex()
 	
 }
 
-void ProcessFeedback(IDirect3DDevice9* pDevice,IDirect3DSurface9* pRT)
+void ProcessFeedback(IDirect3DDevice9* pDevice)
 {
+	IDirect3DSurface9* pRT;
+	IDirect3DSurface9* pOldRT;
+	newRT0->GetSurfaceLevel(0, &pRT);
+	pDevice->GetRenderTarget(0, &pOldRT);
+
+	pDevice->SetRenderTarget(0, pRT);
+	pDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
+
+	g_pEffect9->BeginPass(2);
+	terrainMesh->Render();
+	g_pEffect9->EndPass();
+
+	pDevice->SetRenderTarget(0, pOldRT);
 
 	InitProcessTex();
 
@@ -673,6 +687,9 @@ void ProcessFeedback(IDirect3DDevice9* pDevice,IDirect3DSurface9* pRT)
 	updateIndirectTex();
 	
 	psysSurf->UnlockRect();
+
+	SAFE_RELEASE(pRT);
+	SAFE_RELEASE(pOldRT);
 }
 
 void CALLBACK OnD3D9FrameRender(IDirect3DDevice9* pd3dDevice, double fTime, float fElapsedTime, void* pUserContext)
@@ -692,7 +709,7 @@ void CALLBACK OnD3D9FrameRender(IDirect3DDevice9* pd3dDevice, double fTime, floa
 
 
 	// Clear the render target and the zbuffer 
-	V(pd3dDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 45, 50, 170), 1.0f, 0));
+	
 
 
 	if (SUCCEEDED(pd3dDevice->BeginScene()))
@@ -715,25 +732,12 @@ void CALLBACK OnD3D9FrameRender(IDirect3DDevice9* pd3dDevice, double fTime, floa
 
 		//feedback path
 
-		IDirect3DSurface9* pRT;
-		IDirect3DSurface9* pOldRT;
-		newRT0->GetSurfaceLevel(0, &pRT);
-		pd3dDevice->GetRenderTarget(0, &pOldRT);
-
-		pd3dDevice->SetRenderTarget(0, pRT);
-		pd3dDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
-
-		g_pEffect9->BeginPass(2);
-		terrainMesh->Render();
-		g_pEffect9->EndPass();
-
-		pd3dDevice->SetRenderTarget(0, pOldRT);
-
-		ProcessFeedback(pd3dDevice,pRT);
 		
-		SAFE_RELEASE(pRT);
-		SAFE_RELEASE(pOldRT);
+
+		ProcessFeedback(pd3dDevice);
 		
+		
+		pd3dDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 45, 50, 170), 1.0f, 0);
 		//update indirect tex
 
 		D3DXHANDLE hheight = g_pEffect9->GetParameterByName(NULL, "indirectMap");
@@ -747,13 +751,13 @@ void CALLBACK OnD3D9FrameRender(IDirect3DDevice9* pd3dDevice, double fTime, floa
 		g_pEffect9->BeginPass(3);
 		terrainMesh->Render();
 		g_pEffect9->EndPass();
-
-/*
+		
+		/*
 		g_pEffect9->BeginPass(4);
-		DrawQuad(pd3dDevice);
+		terrainMesh->Render();
 		g_pEffect9->EndPass();
+		*/
 
-*/
 
 		g_pEffect9->End();
 
