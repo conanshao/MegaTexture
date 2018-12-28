@@ -244,7 +244,7 @@ void updateIndirectTex()
 	for (int level = 0; level < 11; level++)
 	{
 		D3DLOCKED_RECT rect;
-		pIndirectMap->LockRect(level,&rect, NULL, 0);
+		pIndirectMap->LockRect(level,&rect, NULL, D3DLOCK_DONOTWAIT);
 
 
 		int texwidth = 1024 >> level;
@@ -690,6 +690,10 @@ void ProcessFeedback(IDirect3DDevice9* pDevice)
 
 	SAFE_RELEASE(pRT);
 	SAFE_RELEASE(pOldRT);
+
+
+	
+
 }
 
 void CALLBACK OnD3D9FrameRender(IDirect3DDevice9* pd3dDevice, double fTime, float fElapsedTime, void* pUserContext)
