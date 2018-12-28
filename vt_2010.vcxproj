@@ -387,7 +387,6 @@
   <ItemGroup>
     <ClInclude Include="terrainMesh.h" />
     <ClInclude Include="TexGenerator.h" />
-    <ClInclude Include="TextureA1.h" />
     <ClInclude Include="VTShare.h" />
     <None Include="DXUT\Optional\directx.ico" />
     <ClInclude Include="DXUT\Core\DXUT.h" />
@@ -414,7 +413,6 @@
   <ItemGroup>
     <ClCompile Include="terrainMesh.cpp" />
     <ClCompile Include="TexGenerator.cpp" />
-    <ClCompile Include="TextureA1.cpp" />
     <ClCompile Include="vt.cpp" />
   </ItemGroup>
   <ItemGroup>

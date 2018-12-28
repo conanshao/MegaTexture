@@ -1,7 +1,7 @@
 #include "DXUT.h"
 #include "DXUTmisc.h"
 #include "TexGenerator.h"
-#include "TextureA1.h"
+//#include "TextureA1.h"
 #include "SDKmisc.h"
 
 VTGenerator::VTGenerator(IDirect3DDevice9* pD3DDevice)
