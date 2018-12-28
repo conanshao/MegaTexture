@@ -1,5 +1,6 @@
 #pragma once
 
+#include <list>
 
 class TextureAl;
 class VTGenerator
@@ -18,6 +19,8 @@ private:
 	IDirect3DSurface9* pNewDS;
 
 private:
+
+	std::list<int> TexPagePool;
 
 	void Init();
 	TextureAl *ptexa1;
@@ -48,6 +51,8 @@ private:
 
 public:
 
+	int getPageIndex();
+	void recycleIndex(int pageindex);
 
 	inline IDirect3DTexture9 * getDebugTex();
 	IDirect3DTexture9 * getTex();

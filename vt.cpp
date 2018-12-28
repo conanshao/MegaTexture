@@ -59,10 +59,10 @@ IDirect3DTexture9* fetchTex = NULL;
 IDirect3DTexture9* resultTex = NULL;
 
 
-IDirect3DTexture9* newRT = NULL;
+IDirect3DTexture9* newRT0 = NULL;
 IDirect3DTexture9* newRT1 = NULL;
 IDirect3DTexture9* sysRT = NULL;
-IDirect3DTexture9* sysRT1 = NULL;
+
 
 VTGenerator* vtgen = NULL;
 
@@ -302,42 +302,7 @@ HRESULT CALLBACK OnD3D9CreateDevice(IDirect3DDevice9* pd3dDevice, const D3DSURFA
 	D3DXCreateTextureFromFileA(pd3dDevice, "tex/Heightmap.png", &terrainTex);
 
 
-	D3DXCreateTextureFromFileA(pd3dDevice, "tex/mask1.tga", &masktex1);
-	D3DXCreateTextureFromFileA(pd3dDevice, "tex/mask2.tga", &masktex2);
-
-	D3DXCreateTextureFromFileA(pd3dDevice, "tex/T_cliff_a_d.tga", &brock);
-	D3DXCreateTextureFromFileA(pd3dDevice, "tex/T_birch_forest_a_d.tga", &bforest);
-	D3DXCreateTextureFromFileA(pd3dDevice, "tex/T_grass_a_d.tga", &grass);
-	D3DXCreateTextureFromFileA(pd3dDevice, "tex/T_ground_a_d.tga", &ground);
-
-	D3DXCreateTextureFromFileA(pd3dDevice, "tex/T_forest_a_d.tga", &pine);
-	D3DXCreateTextureFromFileA(pd3dDevice, "tex/T_ground_rocks_a_d.tga", &srock);
-
-
-	D3DXHANDLE hmask1 = g_pEffect9->GetParameterByName(NULL, "mask1");
-	g_pEffect9->SetTexture(hmask1, masktex1);
-
-	D3DXHANDLE hmask2 = g_pEffect9->GetParameterByName(NULL, "mask2");
-	g_pEffect9->SetTexture(hmask2, masktex2);
-
-	D3DXHANDLE hbrock = g_pEffect9->GetParameterByName(NULL, "brock");
-	g_pEffect9->SetTexture(hbrock, brock);
-
-	D3DXHANDLE hbforest = g_pEffect9->GetParameterByName(NULL, "bforest");
-	g_pEffect9->SetTexture(hbforest, bforest);
-
-	D3DXHANDLE hgrass = g_pEffect9->GetParameterByName(NULL, "grass");
-	g_pEffect9->SetTexture(hgrass, grass);
-
-	D3DXHANDLE hground = g_pEffect9->GetParameterByName(NULL, "ground");
-	g_pEffect9->SetTexture(hground, ground);
-
-	D3DXHANDLE hpine = g_pEffect9->GetParameterByName(NULL, "pine");
-	g_pEffect9->SetTexture(hpine, pine);
-
-	D3DXHANDLE hsrock = g_pEffect9->GetParameterByName(NULL, "srock");
-	g_pEffect9->SetTexture(hsrock, srock);
-
+	
 
 
 	terrainMesh = new TerrainMesh();
@@ -466,7 +431,9 @@ HRESULT CALLBACK OnD3D9ResetDevice(IDirect3DDevice9* pd3dDevice,
 	g_SampleUI.SetLocation(pBackBufferSurfaceDesc->Width - 170, pBackBufferSurfaceDesc->Height - 350);
 	g_SampleUI.SetSize(170, 300);
 
-	D3DXCreateTexture(pd3dDevice, pBackBufferSurfaceDesc->Width, pBackBufferSurfaceDesc->Height, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A2R10G10B10, D3DPOOL_DEFAULT, &newRT);
+	D3DXCreateTexture(pd3dDevice, pBackBufferSurfaceDesc->Width, pBackBufferSurfaceDesc->Height, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A2R10G10B10, D3DPOOL_DEFAULT, &newRT0);
+	D3DXCreateTexture(pd3dDevice, pBackBufferSurfaceDesc->Width, pBackBufferSurfaceDesc->Height, 1, D3DUSAGE_RENDERTARGET, D3DFMT_A2R10G10B10, D3DPOOL_DEFAULT, &newRT1);
+	
 	D3DXCreateTexture(pd3dDevice, pBackBufferSurfaceDesc->Width, pBackBufferSurfaceDesc->Height, 1, 0, D3DFMT_A2R10G10B10, D3DPOOL_SYSTEMMEM, &sysRT);
 	
 	for (int index = 0; index < 1024; index++)
@@ -566,7 +533,6 @@ void ProcessFeedback(IDirect3DDevice9* pDevice,IDirect3DSurface9* pRT)
 	psysSurf->LockRect(&rect, NULL, 0);
 	uint32_t* pfeedbackdata = (uint32_t *)rect.pBits;
 
-
 	for (int i = 0; i < 11; i++)
 	{
 		int texwidth = 1024 >> i;
@@ -582,8 +548,8 @@ void ProcessFeedback(IDirect3DDevice9* pDevice,IDirect3DSurface9* pRT)
 		int ybias;
 		int pageindex;
 	};
-	std::vector<DataStr> dataarray;
 
+	std::vector<DataStr> dataarray;
 	for (int i = 0; i < desc.Width*desc.Height; i++)
 	{
 		if (pfeedbackdata[i] != 0xffffffff)
@@ -594,10 +560,14 @@ void ProcessFeedback(IDirect3DDevice9* pDevice,IDirect3DSurface9* pRT)
 			int texadr = (level << 24) | (xbias + ybias * 4096);
 
 			int texsize = 1024 >> level;
-			if (indirectTexData[level][xbias + ybias * texsize] == 0xffffffff)
+
+			uint32_t& indirectData = indirectTexData[level][xbias + ybias * texsize];
+			uint32_t oldlevel = indirectData >> 16;
+			if ( oldlevel != level )
 			{
 				int xpage = pageindex % 32;
 				int ypage = pageindex / 32;
+				
 				int compindex = level << 16 | (xpage << 8) | ypage;
 				indirectTexData[level][xbias + ybias * texsize] = compindex;
 
@@ -610,11 +580,15 @@ void ProcessFeedback(IDirect3DDevice9* pDevice,IDirect3DSurface9* pRT)
 
 				vtgen->updateTexture(pageindex, texadr);
 				pageindex++;
+
+
+
 			}
 		}
 	}
 
 	updateIndirectTex();
+	//recycle the texture 
 
 	psysSurf->UnlockRect();
 }
@@ -642,17 +616,11 @@ void CALLBACK OnD3D9FrameRender(IDirect3DDevice9* pd3dDevice, double fTime, floa
 	if (SUCCEEDED(pd3dDevice->BeginScene()))
 	{
 
-		int index = 0;	
-		static int init = 0;
-
 
 		// Get the projection & view matrix from the camera class
 		mWorld = *g_Camera.GetWorldMatrix();
 		mProj = *g_Camera.GetProjMatrix();
 		mView = *g_Camera.GetViewMatrix();
-
-
-		
 
 		D3DXHANDLE tex = g_pEffect9->GetParameterByName(NULL, "g_HeightTexture");
 		g_pEffect9->SetTexture(tex, terrainTex);
@@ -667,7 +635,7 @@ void CALLBACK OnD3D9FrameRender(IDirect3DDevice9* pd3dDevice, double fTime, floa
 
 		IDirect3DSurface9* pRT;
 		IDirect3DSurface9* pOldRT;
-		newRT->GetSurfaceLevel(0, &pRT);
+		newRT0->GetSurfaceLevel(0, &pRT);
 		pd3dDevice->GetRenderTarget(0, &pOldRT);
 
 		pd3dDevice->SetRenderTarget(0, pRT);
@@ -699,7 +667,6 @@ void CALLBACK OnD3D9FrameRender(IDirect3DDevice9* pd3dDevice, double fTime, floa
 		g_pEffect9->EndPass();
 
 /*
-
 		g_pEffect9->BeginPass(4);
 		DrawQuad(pd3dDevice);
 		g_pEffect9->EndPass();
@@ -798,10 +765,9 @@ void CALLBACK OnD3D9LostDevice(void* pUserContext)
 	SAFE_RELEASE(g_pSprite9);
 	SAFE_DELETE(g_pTxtHelper);
 
-	SAFE_RELEASE(fetchTex);
-	SAFE_RELEASE(resultTex);
 
-	SAFE_RELEASE(newRT);
+
+	SAFE_RELEASE(newRT0);
 
 }
 
@@ -823,16 +789,6 @@ void CALLBACK OnD3D9DestroyDevice(void* pUserContext)
 	terrainMesh->Shut();
 	delete terrainMesh;
 
-	SAFE_RELEASE(brock);
-	SAFE_RELEASE(bforest);
-	SAFE_RELEASE(grass);
-	SAFE_RELEASE(ground);
-
-	SAFE_RELEASE(pine);
-	SAFE_RELEASE(srock );
-
-	SAFE_RELEASE(masktex1);
-	SAFE_RELEASE(masktex2);
 
 }
 

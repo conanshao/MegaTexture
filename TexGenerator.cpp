@@ -13,6 +13,44 @@ VTGenerator::VTGenerator(IDirect3DDevice9* pD3DDevice)
 
 	InitTex();
 
+
+	for (int i = 0; i < 1024; i++)
+	{
+
+		TexPagePool.push_back(i);
+	}
+
+}
+
+
+int VTGenerator::getPageIndex()
+{
+	
+
+	if ( TexPagePool.size() == 0)
+	{
+		return -1;
+	}
+	else
+	{
+		int texpage = *(TexPagePool.begin());
+
+		TexPagePool.erase(TexPagePool.begin());
+
+		return texpage;
+	}
+}
+
+void VTGenerator::recycleIndex(int pageindex)
+{
+	if (pageindex < 0 || pageindex >= 1024)
+	{
+		//assert(0)
+	}
+	else
+	{
+		TexPagePool.push_back(pageindex);
+	}
 }
 
 void VTGenerator::InitTex()
@@ -98,9 +136,7 @@ void VTGenerator::Init()
 	pRT->GetSurfaceLevel(0, &pNewRT);
 	pDevice->CreateDepthStencilSurface(128, 128, D3DFMT_D24X8, D3DMULTISAMPLE_NONE, 0, true, &pNewDS, NULL);
 
-	//TextureCache->GetSurfaceLevel(0, &pNewRT);
-	//pDevice->CreateDepthStencilSurface(4096, 4096, D3DFMT_D24X8, D3DMULTISAMPLE_NONE, 0, true, &pNewDS, NULL);
-	
+
 	pOrinRT = nullptr;
 	pOrinDS = nullptr;
 }
