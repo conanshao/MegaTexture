@@ -95,6 +95,8 @@ void VTGenerator::InitTex()
 	D3DXHANDLE hsrock = pTexEffect->GetParameterByName(NULL, "srock");
 	pTexEffect->SetTexture(hsrock, srock);
 
+	g_hTex = pTexEffect->GetParameterByName(NULL, "g_HeightTexture");
+
 	g_hmWorldViewProjection = pTexEffect->GetParameterByName(NULL, "g_mWorldViewProjection");
 
 }
@@ -248,6 +250,24 @@ void VTGenerator::TestupdateTexture(int textadr, IDirect3DTexture9* ptex)
 	//
 	End();
 
+}
+
+void VTGenerator::beginRender(D3DXMATRIX mat, IDirect3DTexture9* pterraintex)
+{
+
+	pTexEffect->SetMatrix(g_hmWorldViewProjection, &mat);
+	pTexEffect->SetTexture(g_hTex, pterraintex);
+
+	pTexEffect->Begin(nullptr, 0);
+	pTexEffect->BeginPass(4);
+
+}
+
+void VTGenerator::endRender()
+{
+	pTexEffect->EndPass();
+	pTexEffect->End();
+	//
 }
 
 void VTGenerator::saveTexture()

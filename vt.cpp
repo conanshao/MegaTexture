@@ -716,7 +716,7 @@ void CALLBACK OnD3D9FrameRender(IDirect3DDevice9* pd3dDevice, double fTime, floa
 
 		
 
-		ProcessFeedback(pd3dDevice);
+		//ProcessFeedback(pd3dDevice);
 		
 		
 		pd3dDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 45, 50, 170), 1.0f, 0);
@@ -727,21 +727,18 @@ void CALLBACK OnD3D9FrameRender(IDirect3DDevice9* pd3dDevice, double fTime, floa
 
 		D3DXHANDLE hcache = g_pEffect9->GetParameterByName(NULL, "CacheTexture");
 		g_pEffect9->SetTexture(hcache, vtgen->getTex());
-		
-
-		
-		g_pEffect9->BeginPass(3);
-		terrainMesh->Renderlow();
-		g_pEffect9->EndPass();
-		
-		/*
-		g_pEffect9->BeginPass(4);
-		terrainMesh->Render();
-		g_pEffect9->EndPass();
-		*/
-
-
+			
+		//g_pEffect9->BeginPass(3);
+		//terrainMesh->Renderlow();
+		//g_pEffect9->EndPass();
+	
 		g_pEffect9->End();
+
+		vtgen->beginRender(mWorldViewProjection,terrainTex);
+
+		terrainMesh->Renderlow();
+
+		vtgen->endRender();
 
 		DXUT_BeginPerfEvent(DXUT_PERFEVENTCOLOR, L"HUD / Stats"); // These events are to help PIX identify what the code is doing
 		RenderText();

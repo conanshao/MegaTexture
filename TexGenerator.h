@@ -48,8 +48,12 @@ private:
 	D3DXHANDLE                  g_hmWorldViewProjection;
 	D3DXHANDLE                  g_hmWorld;
 	D3DXHANDLE                  g_hfTime;
+	D3DXHANDLE					g_hTex;
 
 public:
+
+	void beginRender(D3DXMATRIX mat, IDirect3DTexture9* pterraintex);
+	void endRender();
 
 	int getPageIndex();
 	void recycleIndex(int pageindex);

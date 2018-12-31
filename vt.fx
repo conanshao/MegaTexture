@@ -60,7 +60,7 @@ sampler_state
 	MipFilter = LINEAR;
 	MinFilter = LINEAR;
 	MagFilter = LINEAR;
-	MIPMAPLODBIAS = -2;
+	MIPMAPLODBIAS = -1;
 };
 
 texture bforest;
@@ -71,7 +71,7 @@ sampler_state
 	MipFilter = LINEAR;
 	MinFilter = LINEAR;
 	MagFilter = LINEAR;
-	MIPMAPLODBIAS = -2;
+	MIPMAPLODBIAS = -1;
 };
 
 texture grass;
@@ -82,7 +82,7 @@ sampler_state
 	MipFilter = LINEAR;
 	MinFilter = LINEAR;
 	MagFilter = LINEAR;
-	MIPMAPLODBIAS = -2;
+	MIPMAPLODBIAS = -1;
 };
 
 texture ground;
@@ -93,7 +93,7 @@ sampler_state
 	MipFilter = LINEAR;
 	MinFilter = LINEAR;
 	MagFilter = LINEAR;
-	MIPMAPLODBIAS = -2;
+	MIPMAPLODBIAS = -1;
 };
 
 texture pine;
@@ -104,7 +104,7 @@ sampler_state
 	MipFilter = LINEAR;
 	MinFilter = LINEAR;
 	MagFilter = LINEAR;
-	MIPMAPLODBIAS = -2;
+	MIPMAPLODBIAS = -1;
 };
 
 texture srock;
@@ -115,7 +115,7 @@ sampler_state
 	MipFilter = LINEAR;
 	MinFilter = LINEAR;
 	MagFilter = LINEAR;
-	MIPMAPLODBIAS = -2;
+	MIPMAPLODBIAS = -1;
 };
 
 texture indirectTex;
@@ -394,7 +394,7 @@ technique RenderScene
 	{
 
 		VertexShader = compile vs_3_0 RenderSceneTerrain();
-		PixelShader = compile ps_3_0 RenderScenePSTest();
+		PixelShader = compile ps_3_0 RenderScenePS();
 	}
 
 
