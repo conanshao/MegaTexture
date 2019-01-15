@@ -126,7 +126,7 @@ sampler_state
 	MipFilter = POINT;
 	MinFilter = POINT;
 	MagFilter = POINT;
-	MIPMAPLODBIAS = 4;
+	MIPMAPLODBIAS = 3;
 };
 
 
@@ -310,7 +310,9 @@ PS_OUTPUT2 RenderScenePS2(VS_OUTPUTNormal In)
 {
 	PS_OUTPUT2 Output;
 	
-	Output.RGBColor = tex2D(IndirectSampler, In.TextureUV);
+	float level =  mip_map_level(In.TextureUV *1024.0f) ;
+
+	Output.RGBColor =  tex2D(IndirectSampler, In.TextureUV);
 
 
 	return Output;
