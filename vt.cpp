@@ -118,6 +118,7 @@ int WINAPI wWinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPWSTR lpCmdLi
 	DXUTSetCursorSettings(true, true);
 	DXUTCreateWindow(L"TerrainEdit");
 	DXUTCreateDevice(true, 1920, 1080);
+	//DXUTCreateDevice(true, 1024, 1024);
 	DXUTMainLoop(); // Enter into the DXUT render loop
 
 	return DXUTGetExitCode();
@@ -292,7 +293,7 @@ HRESULT CALLBACK OnD3D9CreateDevice(IDirect3DDevice9* pd3dDevice, const D3DSURFA
 
 	vtgen = new VTGenerator(pd3dDevice);
 
-	pd3dDevice->CreateTexture(1024, 1024, 0, 0, D3DFMT_X8R8G8B8, D3DPOOL_MANAGED, &pTestTex, NULL);
+	pd3dDevice->CreateTexture(1024, 1024, 0, 0, D3DFMT_X8R8G8B8, D3DPOOL_SYSTEMMEM, &pTestTex, NULL);
 
 	uint32_t colorlevels[11] =
 	{
@@ -681,7 +682,7 @@ void ProcessFeedback(IDirect3DDevice9* pDevice)
 				vtgen->updateTexture(pageindex, texadr);
 				
 				int& levelindex = vertexnum[level];
-				PointArray[level][levelindex++].pos = D3DXVECTOR3(xbias, ybias, level);
+				PointArray[level][levelindex].pos = D3DXVECTOR3(xbias, ybias, level);
 				PointArray[level][levelindex++].color = compindex;
 				countindex++;
 			}
@@ -696,16 +697,45 @@ void ProcessFeedback(IDirect3DDevice9* pDevice)
 
 	psysSurf->UnlockRect();
 	
-
+	/*
 	static int frameindex = 0;
 	if (frameindex < 1500)
 	{
 		updateIndirectTex();
 		frameindex++;
-	}
+	}*/
 
+	g_pEffect9->BeginPass(5);
 	updateIndirTex(pDevice);
-	
+	g_pEffect9->EndPass();
+	/*
+	//
+	IDirect3DSurface9* psurf;
+	pIndirectMap->GetSurfaceLevel(1, &psurf);
+
+	IDirect3DSurface9* psurf1;
+	pTestTex->GetSurfaceLevel(1, &psurf1);
+
+	pDevice->GetRenderTargetData( pIndirectRT[1], psurf1);
+
+	D3DLOCKED_RECT rect2;
+	psurf->LockRect(&rect2, NULL, 0);
+	DWORD* ptex = (DWORD *)rect2.pBits;
+
+	D3DLOCKED_RECT rect1;
+	psurf1->LockRect(&rect1, NULL, 0);
+	DWORD* ptex1 = (DWORD *)rect1.pBits;
+
+	for (int i = 0;i < 512 * 512;i++)
+	{
+		if ( ptex[i] != -1 && ptex[i] != ptex1[i])
+		{
+			int test = i;
+		}
+	}
+	psurf->UnlockRect();
+	psurf1->UnlockRect();*/
+
 	pDevice->SetRenderTarget(0, pOldRT);
 	SAFE_RELEASE(pRT);
 	SAFE_RELEASE(pOldRT);
@@ -755,7 +785,7 @@ void CALLBACK OnD3D9FrameRender(IDirect3DDevice9* pd3dDevice, double fTime, floa
 		//update indirect tex
 
 		D3DXHANDLE hheight = g_pEffect9->GetParameterByName(NULL, "indirectMap");
-		g_pEffect9->SetTexture( hheight, pIndirectMap );
+		g_pEffect9->SetTexture( hheight, indirectMap );
 
 		D3DXHANDLE hcache = g_pEffect9->GetParameterByName(NULL, "CacheTexture");
 		g_pEffect9->SetTexture(hcache, vtgen->getTex());
@@ -763,9 +793,26 @@ void CALLBACK OnD3D9FrameRender(IDirect3DDevice9* pd3dDevice, double fTime, floa
 		g_pEffect9->BeginPass(3);
 		terrainMesh->Renderlow();
 		g_pEffect9->EndPass();
-	
+
+		/*
+		struct PointStr
+		{
+			D3DXVECTOR3 pos;
+			DWORD color;
+		};
+
+		PointStr point[2] =
+		{
+			{D3DXVECTOR3(512.0f,512.0f,0.0f),0xfffffff },
+			{D3DXVECTOR3(1023.0f,1023.0f,0.0f),0xfffffff }
+		};
+		g_pEffect9->BeginPass(5);
+
+		pd3dDevice->SetFVF(D3DFVF_XYZ | D3DFVF_DIFFUSE);
+		pd3dDevice->DrawPrimitiveUP(D3DPT_POINTLIST, 2,point ,sizeof(PointStr) );
+		g_pEffect9->EndPass();
+	*/
 		g_pEffect9->End();
-		
 		/*
 		vtgen->beginRender(mWorldViewProjection,terrainTex);
 		terrainMesh->Renderlow();
@@ -893,7 +940,7 @@ void CALLBACK OnD3D9DestroyDevice(void* pUserContext)
 
 	SAFE_RELEASE(pFeedBackTex);
 
-	SAFE_RELEASE(pIndirectMap);
+	
 
 
 }

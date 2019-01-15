@@ -172,11 +172,19 @@ struct VS_OUTPUTNormal
 
 };
 
+struct VS_COLOR
+{
+	float4 Position   : POSITION;   // vertex position 
+	float4 Color  : COLOR0;  // vertex texture coords 
+	float psize : PSIZE;
+};
+
 //--------------------------------------------------------------------------------------
 // Pixel shader output structure
 //--------------------------------------------------------------------------------------
 struct PS_OUTPUT
 {
+	
 	float4 RGBColor : COLOR0;  // Pixel color    
 };
 
@@ -357,6 +365,36 @@ PS_OUTPUT RenderScenePSTest(VS_OUTPUTNormal In)
 }
 
 
+
+VS_COLOR RenderPointVS( float4 vPos : POSITION,
+						float4 vColor : COLOR0)
+{
+
+	VS_COLOR Output;
+
+	// Transform the position from object space to homogeneous projection space
+	float texsize =  1024.0f / pow(2.0f, vPos.z);
+	float posx = (vPos.x +0.5f)/ texsize;
+	float posy = (vPos.y + 0.5f) / texsize;
+	Output.Position = float4(2.0f*posx-1.0f,1.0f-2.0f*posy, 0.5f,1.0f);
+	Output.Color = vColor;
+	Output.psize = 1.0f;
+
+	return Output;
+
+}
+
+
+PS_OUTPUT RenderPointPS(VS_COLOR In)
+{
+	PS_OUTPUT Output;
+
+	Output.RGBColor = In.Color;
+
+	return Output;
+}
+
+
 //--------------------------------------------------------------------------------------
 // Renders scene 
 //--------------------------------------------------------------------------------------
@@ -397,6 +435,14 @@ technique RenderScene
 
 		VertexShader = compile vs_3_0 RenderSceneTerrain();
 		PixelShader = compile ps_3_0 RenderScenePS();
+	}
+
+	pass P5
+	{
+		zenable = false;
+		PointScaleEnable = true;
+		VertexShader = compile vs_3_0 RenderPointVS();
+		PixelShader = compile ps_3_0 RenderPointPS();
 	}
 
 
