@@ -587,110 +587,110 @@ void ProcessFeedback(IDirect3DDevice9* pDevice)
 
 	pDevice->SetRenderTarget(0, pOldRT);
 	
-	//IDirect3DSurface9* pReadRT;
-	//newRT2->GetSurfaceLevel(0, &pReadRT);
+
 	
 	if (psysSurf == nullptr)
 	{
 		sysRT->GetSurfaceLevel(0, &psysSurf);
 	}
-	
-	pDevice->GetRenderTargetData(pRT, psysSurf);
-	
-	InitProcessTex();
-	
-	D3DSURFACE_DESC desc;
-	psysSurf->GetDesc(&desc);
 
-	D3DLOCKED_RECT rect;
-	psysSurf->LockRect(&rect, NULL, D3DLOCK_READONLY);
-	uint32_t* pfeedbackdata = (uint32_t *)rect.pBits;
-	
-	//recycle the texture 
-	for (int i = 1; i < 1024; i++)
-	{
-		if ( pageindexVisit[i].visit != -1)
-		{
-			pageindexVisit[i].visit++;
-		}
-		
-		if ( pageindexVisit[i].visit >= 3 )
-		{
-			vtgen->recycleIndex(i);
-			pageindexVisit[i].visit = -1;
-			int level = pageindexVisit[i].level;
-			int xbias = pageindexVisit[i].xbias;
-			int ybias = pageindexVisit[i].ybias;
-			int texsize = 1024 >> level;
-			indirectTexData[level][xbias + ybias * texsize] = 0xffffffff;
-		}
-	}
-
-
-	for ( int i = 0; i < 10; i++ )
+	for (int i = 0; i < 10; i++)
 	{
 		vertexnum[i] = 0;
 	}
 
-	int countindex = 0;
-	for (int i = 0; i < desc.Width*desc.Height; i++)
-	{
-		if (pfeedbackdata[i] != 0xffffffff)
+		pDevice->GetRenderTargetData(pRT, psysSurf);
+
+		InitProcessTex();
+
+		D3DSURFACE_DESC desc;
+		psysSurf->GetDesc(&desc);
+
+		D3DLOCKED_RECT rect;
+		psysSurf->LockRect(&rect, NULL, D3DLOCK_READONLY);
+		uint32_t* pfeedbackdata = (uint32_t *)rect.pBits;
+
+
 		{
-			int level = pfeedbackdata[i] >> 22;
-			int xbias = (pfeedbackdata[i] & 0x003ff000) >> 12;
-			int ybias = (pfeedbackdata[i] & 0x00000ffc) >> 2;
-			int texadr = (level << 24) | (xbias + ybias * 4096);
 
-			int texsize = 1024 >> level;
-
-			uint32_t& indirectData = indirectTexData[level][xbias + ybias * texsize];
-			uint32_t oldlevel = indirectData >> 16;
-			if ( oldlevel != level )
+		for (int i = 1; i < 1024; i++)
+		{
+			if (pageindexVisit[i].visit != -1)
 			{
-				int pageindex = vtgen->getPageIndex();
+				pageindexVisit[i].visit++;
+			}
+
+			if (pageindexVisit[i].visit >= 3)
+			{
+				vtgen->recycleIndex(i);
+				pageindexVisit[i].visit = -1;
+				int level = pageindexVisit[i].level;
+				int xbias = pageindexVisit[i].xbias;
+				int ybias = pageindexVisit[i].ybias;
 				
-				if (pageindex == -1)
-				{
-					assert(0);
-				}
-
-				int xpage = pageindex % 32;
-				int ypage = pageindex / 32;
-				
-				int compindex = level << 16 | (xpage << 8) | ypage;
-				indirectData = compindex;
-
-				pageindexVisit[pageindex].visit = 0;
-				pageindexVisit[pageindex].level = level;
-				pageindexVisit[pageindex].xbias = xbias;
-				pageindexVisit[pageindex].ybias = ybias;
-
-				vtgen->updateTexture(pageindex, texadr);
+				int texsize = 1024 >> level;
+				indirectTexData[level][xbias + ybias * texsize] = 0xffffffff;
 				
 				int& levelindex = vertexnum[level];
 				PointArray[level][levelindex].pos = D3DXVECTOR3(xbias, ybias, level);
-				PointArray[level][levelindex++].color = compindex;
-				countindex++;
-			}
-			else
-			{
-				int pageindex = ((indirectData & 0x0000ff00)>>8 )|(indirectData & 0x000000ff)<<5;
-				pageindexVisit[pageindex].visit = 0;
-
+				PointArray[level][levelindex++].color = 0;
 			}
 		}
-	}
 
-	psysSurf->UnlockRect();
-	
-	/*
-	static int frameindex = 0;
-	if (frameindex < 1500)
-	{
-		updateIndirectTex();
-		frameindex++;
-	}*/
+		int countindex = 0;
+		for (int i = 0; i < desc.Width*desc.Height; i++)
+		{
+			if (pfeedbackdata[i] != 0xffffffff)
+			{
+				int level = pfeedbackdata[i] >> 22;
+				int xbias = (pfeedbackdata[i] & 0x003ff000) >> 12;
+				int ybias = (pfeedbackdata[i] & 0x00000ffc) >> 2;
+				int texadr = (level << 24) | (xbias + ybias * 4096);
+
+				int texsize = 1024 >> level;
+
+				uint32_t& indirectData = indirectTexData[level][xbias + ybias * texsize];
+				uint32_t oldlevel = indirectData >> 16;
+				if (oldlevel != level)
+				{
+					int pageindex = vtgen->getPageIndex();
+
+					if (pageindex == -1)
+					{
+						assert(0);
+					}
+
+					int xpage = pageindex % 32;
+					int ypage = pageindex / 32;
+
+					int compindex = level << 16 | (xpage << 8) | ypage;
+					indirectData = compindex;
+
+					pageindexVisit[pageindex].visit = 0;
+					pageindexVisit[pageindex].level = level;
+					pageindexVisit[pageindex].xbias = xbias;
+					pageindexVisit[pageindex].ybias = ybias;
+
+					vtgen->updateTexture(pageindex, texadr);
+
+					int& levelindex = vertexnum[level];
+					PointArray[level][levelindex].pos = D3DXVECTOR3(xbias, ybias, level);
+					PointArray[level][levelindex++].color = compindex;
+					countindex++;
+				}
+				else
+				{
+					int pageindex = ((indirectData & 0x0000ff00) >> 8) | (indirectData & 0x000000ff) << 5;
+					pageindexVisit[pageindex].visit = 0;
+
+				}
+			}
+		}
+		//frameindex++;
+		}
+
+		psysSurf->UnlockRect();
+		
 
 	g_pEffect9->BeginPass(5);
 	updateIndirTex(pDevice);
