@@ -237,7 +237,7 @@ VS_OUTPUTNormal RenderSceneTerrain2(float4 vPos : POSITION,
 // This shader outputs the pixel's color by modulating the texture's
 // color with diffuse material color
 //--------------------------------------------------------------------------------------
-PS_OUTPUT RenderScenePS(VS_OUTPUTNormal In)
+PS_OUTPUT RenderBlendPS(VS_OUTPUTNormal In)
 {
 	PS_OUTPUT Output;
 
@@ -314,7 +314,7 @@ struct PS_OUTPUT2
    
 };
 
-PS_OUTPUT2 RenderScenePS2(VS_OUTPUTNormal In)
+PS_OUTPUT2 RenderFeedbackPS(VS_OUTPUTNormal In)
 {
 	PS_OUTPUT2 Output;
 	
@@ -327,7 +327,7 @@ PS_OUTPUT2 RenderScenePS2(VS_OUTPUTNormal In)
 }
 
 
-PS_OUTPUT RenderScenePS3(VS_OUTPUTNormal In)
+PS_OUTPUT RenderFinalPS(VS_OUTPUTNormal In)
 {
 	PS_OUTPUT Output;
 
@@ -346,8 +346,6 @@ PS_OUTPUT RenderScenePS3(VS_OUTPUTNormal In)
 	float2 finaluv = uvbias + uv;
 	finaluv.y = 1.0f - finaluv.y;
 	Output.RGBColor = tex2D(CacheTextureSampler, finaluv);
-
-	//Output.RGBColor = color;
 
 	return Output;
 }
@@ -406,35 +404,32 @@ technique RenderScene
 		//fillmode = wireframe;
 		cullmode = none;
 		VertexShader = compile vs_3_0 RenderSceneTerrain2();
-		PixelShader = compile ps_3_0 RenderScenePS();
+		PixelShader = compile ps_3_0 RenderBlendPS();
 	}
 
 	pass P1
-	{
-		
+	{	
 		VertexShader = compile vs_3_0 RenderSceneTerrain();
 		PixelShader = compile ps_3_0 RenderScenePS1();
 	}
 
 	pass P2
-	{
-		
+	{	
 		VertexShader = compile vs_3_0 RenderSceneTerrain();
-		PixelShader = compile ps_3_0 RenderScenePS2();
+		PixelShader = compile ps_3_0 RenderFeedbackPS();
 	}
 
 	pass P3
 	{
 		zenable = true;
 		VertexShader = compile vs_3_0 RenderSceneTerrain();
-		PixelShader = compile ps_3_0 RenderScenePS3();
+		PixelShader = compile ps_3_0 RenderFinalPS();
 	}
 
 	pass P4
 	{
-
 		VertexShader = compile vs_3_0 RenderSceneTerrain();
-		PixelShader = compile ps_3_0 RenderScenePS();
+		PixelShader = compile ps_3_0 RenderBlendPS();
 	}
 
 	pass P5
