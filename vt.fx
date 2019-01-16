@@ -425,7 +425,7 @@ technique RenderScene
 
 	pass P3
 	{
-
+		zenable = true;
 		VertexShader = compile vs_3_0 RenderSceneTerrain();
 		PixelShader = compile ps_3_0 RenderScenePS3();
 	}

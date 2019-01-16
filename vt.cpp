@@ -577,6 +577,7 @@ void ProcessFeedback(IDirect3DDevice9* pDevice)
 	newRT0->GetSurfaceLevel(0, &pRT);
 	pDevice->GetRenderTarget(0, &pOldRT);
 
+
 	pDevice->SetRenderTarget(0, pRT);
 	pDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(255, 255, 255, 255), 1.0f, 0);
 
@@ -585,10 +586,9 @@ void ProcessFeedback(IDirect3DDevice9* pDevice)
 	g_pEffect9->EndPass();
 
 	pDevice->SetRenderTarget(0, pOldRT);
-
 	
-	IDirect3DSurface9* pReadRT;
-	newRT2->GetSurfaceLevel(0, &pReadRT);
+	//IDirect3DSurface9* pReadRT;
+	//newRT2->GetSurfaceLevel(0, &pReadRT);
 	
 	if (psysSurf == nullptr)
 	{
@@ -626,19 +626,6 @@ void ProcessFeedback(IDirect3DDevice9* pDevice)
 		}
 	}
 
-	//process indirect tex
-	for (int level = 9; level < 0; level--)
-	{
-		int mipsize = 1024 >> level;
-		for (uint32_t j = 0; j < mipsize; j++)
-			for (uint32_t i = 0; i < mipsize; i++)
-			{
-				if( indirectTexData[level][i + j * mipsize] > level  )
-				{
-					indirectTexData[level][i + j * mipsize] = indirectTexData[level + 1][i / 2 + (j / 2) * (mipsize / 2)];
-				}
-			}
-	}
 
 	for ( int i = 0; i < 10; i++ )
 	{
@@ -708,33 +695,7 @@ void ProcessFeedback(IDirect3DDevice9* pDevice)
 	g_pEffect9->BeginPass(5);
 	updateIndirTex(pDevice);
 	g_pEffect9->EndPass();
-	/*
-	//
-	IDirect3DSurface9* psurf;
-	pIndirectMap->GetSurfaceLevel(1, &psurf);
 
-	IDirect3DSurface9* psurf1;
-	pTestTex->GetSurfaceLevel(1, &psurf1);
-
-	pDevice->GetRenderTargetData( pIndirectRT[1], psurf1);
-
-	D3DLOCKED_RECT rect2;
-	psurf->LockRect(&rect2, NULL, 0);
-	DWORD* ptex = (DWORD *)rect2.pBits;
-
-	D3DLOCKED_RECT rect1;
-	psurf1->LockRect(&rect1, NULL, 0);
-	DWORD* ptex1 = (DWORD *)rect1.pBits;
-
-	for (int i = 0;i < 512 * 512;i++)
-	{
-		if ( ptex[i] != -1 && ptex[i] != ptex1[i])
-		{
-			int test = i;
-		}
-	}
-	psurf->UnlockRect();
-	psurf1->UnlockRect();*/
 
 	pDevice->SetRenderTarget(0, pOldRT);
 	SAFE_RELEASE(pRT);
@@ -774,12 +735,7 @@ void CALLBACK OnD3D9FrameRender(IDirect3DDevice9* pd3dDevice, double fTime, floa
 		g_pEffect9->Begin(nullptr, 0);
 
 
-		//feedback path
-
-		
-
 		ProcessFeedback(pd3dDevice);
-		
 		
 		pd3dDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 45, 50, 170), 1.0f, 0);
 		//update indirect tex
@@ -794,30 +750,9 @@ void CALLBACK OnD3D9FrameRender(IDirect3DDevice9* pd3dDevice, double fTime, floa
 		terrainMesh->Renderlow();
 		g_pEffect9->EndPass();
 
-		/*
-		struct PointStr
-		{
-			D3DXVECTOR3 pos;
-			DWORD color;
-		};
 
-		PointStr point[2] =
-		{
-			{D3DXVECTOR3(512.0f,512.0f,0.0f),0xfffffff },
-			{D3DXVECTOR3(1023.0f,1023.0f,0.0f),0xfffffff }
-		};
-		g_pEffect9->BeginPass(5);
-
-		pd3dDevice->SetFVF(D3DFVF_XYZ | D3DFVF_DIFFUSE);
-		pd3dDevice->DrawPrimitiveUP(D3DPT_POINTLIST, 2,point ,sizeof(PointStr) );
-		g_pEffect9->EndPass();
-	*/
 		g_pEffect9->End();
-		/*
-		vtgen->beginRender(mWorldViewProjection,terrainTex);
-		terrainMesh->Renderlow();
-		vtgen->endRender();
-		*/
+
 
 		DXUT_BeginPerfEvent(DXUT_PERFEVENTCOLOR, L"HUD / Stats"); // These events are to help PIX identify what the code is doing
 		RenderText();
