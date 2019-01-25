@@ -215,8 +215,8 @@ void VTGenerator::TestupdateTexture(int textadr, IDirect3DTexture9* ptex)
 	int xbias = bias % 4096;
 	int ybias = bias / 4096;
 
-	float level0size = 1.0f;
-	float levelsize = 1.0f * (1<<level) ;
+	float basesize = 1.0f;
+	float levelsize = basesize * (1<<level) ;
 	float halfesize = levelsize / 2.0f;
 
 	Begin(ptex);
@@ -336,12 +336,10 @@ void VTGenerator::updateTexture(int texpage, int textadr)
 	RECT rect;
 	rect.left	= 0 + biasx*128;
 	rect.bottom	= 4096 -  biasy * 128;
-	//rect.bottom = 0 + biasy * 128;
-
+	
 	rect.right	= 128 + biasx * 128;
 	rect.top = 4096 - 128 - biasy * 128;
-	//rect.top = 128 + biasy * 128;
-		
+			
 	pDevice->StretchRect(pNewRT,NULL, psurf, &rect, D3DTEXF_LINEAR);
 	SAFE_RELEASE(psurf);
 		

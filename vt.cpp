@@ -227,19 +227,6 @@ IDirect3DTexture9* indirectMap;
 
 IDirect3DSurface9* pIndirectRT[11];
 
-void updateIndirectTex()
-{
-	for (int level = 0; level < 11; level++)
-	{
-		D3DLOCKED_RECT rect;
-		pIndirectMap->LockRect(level,&rect, NULL, D3DLOCK_DISCARD);
-		int texwidth = 1024 >> level;
-		memcpy(rect.pBits, indirectTexData[level], 4* texwidth* texwidth);
-		pIndirectMap->UnlockRect(level);
-	}
-}
-
-
 
 
 HRESULT CALLBACK OnD3D9CreateDevice(IDirect3DDevice9* pd3dDevice, const D3DSURFACE_DESC* pBackBufferSurfaceDesc,
@@ -521,15 +508,21 @@ int vertexnum[10];
 
 void updateIndirTex(IDirect3DDevice9* pdevice)
 {
+	g_pEffect9->BeginPass(5);
 	pdevice->SetFVF(D3DFVF_XYZ|D3DFVF_DIFFUSE);
 	for (int level = 9; level >= 0; level--)
 	{
-		if ( vertexnum[level] > 0 )
+		for (int caculatelevel = 9; caculatelevel >= level; caculatelevel--)
 		{
-			pdevice->SetRenderTarget(0, pIndirectRT[level]);
-			pdevice->DrawPrimitiveUP(D3DPT_POINTLIST, vertexnum[level], PointArray[level], sizeof(PointVertex));
+			if (vertexnum[caculatelevel] > 0)
+			{
+				pdevice->SetRenderTarget(0, pIndirectRT[caculatelevel]);
+				pdevice->DrawPrimitiveUP(D3DPT_POINTLIST, vertexnum[caculatelevel], PointArray[caculatelevel], sizeof(PointVertex));
+			}
 		}
+
 	}
+	g_pEffect9->EndPass();
 }
 
 void InitProcessTex()
@@ -682,10 +675,9 @@ void ProcessFeedback(IDirect3DDevice9* pDevice)
 	
 	psysSurf->UnlockRect();
 		
-	g_pEffect9->BeginPass(5);
+	
 	updateIndirTex(pDevice);
-	g_pEffect9->EndPass();
-
+	
 
 	pDevice->SetRenderTarget(0, pOldRT);
 	SAFE_RELEASE(pRT);
@@ -724,7 +716,6 @@ void CALLBACK OnD3D9FrameRender(IDirect3DDevice9* pd3dDevice, double fTime, floa
 
 		g_pEffect9->Begin(nullptr, 0);
 
-
 		ProcessFeedback(pd3dDevice);
 		
 		pd3dDevice->Clear(0, NULL, D3DCLEAR_TARGET | D3DCLEAR_ZBUFFER, D3DCOLOR_ARGB(0, 45, 50, 170), 1.0f, 0);
@@ -739,7 +730,6 @@ void CALLBACK OnD3D9FrameRender(IDirect3DDevice9* pd3dDevice, double fTime, floa
 		g_pEffect9->BeginPass(3);
 		terrainMesh->Renderlow();
 		g_pEffect9->EndPass();
-
 
 		g_pEffect9->End();
 
