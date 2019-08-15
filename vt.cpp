@@ -266,9 +266,9 @@ HRESULT CALLBACK OnD3D9CreateDevice(IDirect3DDevice9* pd3dDevice, const D3DSURFA
 	g_hfTime = g_pEffect9->GetParameterByName(NULL, "g_fTime");
 
 	// Setup the camera's view parameters
-	D3DXVECTOR3 vecEye(68.2821579, 35.6292763, -61.6675453);
+	D3DXVECTOR3 vecEye(68.2821579+5.0f, 35.6292763, -61.6675453 + 5.0f);
 
-	D3DXVECTOR3 vecAt(68.2470551, 35.6266937, -60.6681633);
+	D3DXVECTOR3 vecAt(68.2470551, 35.6266937, -60.6681633 + 5.0f);
 
 	g_Camera.SetViewParams(&vecEye, &vecAt);
 	g_Camera.SetScalers(0.001f, 50.0f);
