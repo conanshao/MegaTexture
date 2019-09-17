@@ -249,6 +249,45 @@ HRESULT CALLBACK OnD3D9CreateDevice(IDirect3DDevice9* pd3dDevice, const D3DSURFA
 	dwShaderFlags |= D3DXFX_LARGEADDRESSAWARE;
 #endif
 
+	ID3DXMesh* pmesh;
+	D3DXCreateTeapot(pd3dDevice, &pmesh, NULL);
+	
+	struct MeshVertex
+	{
+		D3DXVECTOR3 pos;
+		D3DXVECTOR3 nor;
+	};
+
+	UINT vertexcount = 0;
+	vertexcount = pmesh->GetNumVertices();
+
+	UINT indexcount = 0;
+	indexcount = pmesh->GetNumFaces() * 3 ;
+
+	MeshVertex* pVertex = new MeshVertex[vertexcount];
+
+	void* pverts;
+	pmesh->LockVertexBuffer(0, & pverts);
+	memcpy(pVertex, pverts, sizeof(MeshVertex)* vertexcount);
+	pmesh->UnlockVertexBuffer();
+
+
+	WORD* pindex = new WORD[indexcount];
+	void* pindices;
+	pmesh->LockIndexBuffer(0, &pindices);
+	memcpy(pindex, pindices, sizeof(WORD)* indexcount);
+	pmesh->UnlockIndexBuffer();
+
+	FILE* fmesh;
+	fopen_s(&fmesh, "teapot", "wb");
+	fwrite(&vertexcount, sizeof(UINT), 1, fmesh);
+	fwrite(pVertex, sizeof(MeshVertex), vertexcount, fmesh);
+
+	fwrite(&indexcount, sizeof(UINT), 1, fmesh);
+	fwrite(pindex, sizeof(WORD), indexcount, fmesh);
+
+	fclose(fmesh);
+
 	V_RETURN(DXUTFindDXSDKMediaFileCch(str, MAX_PATH, L"vt.fx"));
 
 	ID3DXBuffer* pError;
